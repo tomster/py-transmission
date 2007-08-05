@@ -1,0 +1,638 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.4: http://docutils.sourceforge.net/" />
+<title>The Python Transmission Client</title>
+<style type="text/css">
+
+/*
+:Author: David Goodger
+:Contact: goodger@users.sourceforge.net
+:Date: $Date: 2005-12-18 01:56:14 +0100 (Sun, 18 Dec 2005) $
+:Revision: $Revision: 4224 $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin-left: 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left {
+  clear: left }
+
+img.align-right {
+  clear: right }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font-family: serif ;
+  font-size: 100% }
+
+pre.literal-block, pre.doctest-block {
+  margin-left: 2em ;
+  margin-right: 2em ;
+  background-color: #eeeeee }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+tt.docutils {
+  background-color: #eeeeee }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="the-python-transmission-client">
+<h1 class="title">The Python Transmission Client</h1>
+<p>The Python Transmission Client module is a <strong>Python API</strong> for the <a class="reference" href="http://transmission.m0k.org/index.php">Transmission Bit TorrentClient</a>.</p>
+<div class="section">
+<h1><a id="why-python-bindings-for-transmission" name="why-python-bindings-for-transmission">Why Python bindings for Transmission?</a></h1>
+<p>The 'official' BitTorrent software is in fact already implemented in Python: the <a class="reference" href="http://www.bittorrent.com/download">Windows, Macintosh Linux GUI clients</a> available at <a class="reference" href="http://www.bittorrent.com/">http://www.bittorrent.com/</a> each contain a standalone python interpreter and lots and lots of python code. Also the command line tools such as <tt class="docutils literal"><span class="pre">btlaunch-many</span></tt> or <tt class="docutils literal"><span class="pre">make-torrent</span></tt> are pure python scripts. So why bother with Python bindings for another implementation of the BitTorrent prototcol? Two reasons: <strong>Performance</strong> and <strong>Simplicity</strong>.</p>
+<div class="section">
+<h2><a id="performance" name="performance">Performance</a></h2>
+<p>Transmission is written in C and several orders of magnitude more efficient than the official client. Running several large torrents with a total throughput of perhaps 1Mb/s can seriously tax even a modern machine and sends your CPU-usage easily up into the 20 - 40% region and will noticably affect the performance of other processes on that machine. With transmission the difference becomes hardly even measurable ;-)</p>
+</div>
+<div class="section">
+<h2><a id="simplicity" name="simplicity">Simplicity</a></h2>
+<p>Transmission has recently introduced a RPC architecture in which it launches an independant daemon which listens on a local socket for commands and exposes a rich API for monitoring and controlling transmission. This makes it much easier and 'cleaner' to implement clients in other languages, as one doesn't have to deal with issues such as threading or memory management (possibly cross-platform, too!) but rather just needs to implement a simple RPC API. Which is exactly, what this package aims to do.</p>
+</div>
+</div>
+<div class="section">
+<h1><a id="how-does-it-work" name="how-does-it-work">How does it work?</a></h1>
+<p>It does so by providing a wrapper class <tt class="docutils literal"><span class="pre">TransmissionClient</span></tt>, an instance of which represents a locally running <tt class="docutils literal"><span class="pre">transmission-daemon</span></tt> and provides wrapper methods to (most of) the RPC methods listed in the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt">specification</a>.</p>
+</div>
+<div class="section">
+<h1><a id="usage" name="usage">Usage</a></h1>
+<p>Simply import the <cite>TransmissionClient</cite> class from the <cite>TransmissionClient</cite> module:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; from TransmissionClient import TransmissionClient
+</pre>
+</blockquote>
+<p>To create an instance you must supply the constructor with the path to the socket of a locally running transmission-daemon.</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon = TransmissionClient(SOCKETPATH)
+</pre>
+</blockquote>
+<p><strong>Important note regarding running this test:</strong></p>
+<blockquote>
+<p>If you want to <em>run this doctest</em> (as opposed to <em>just reading it for documentation</em>) you need to first start up an actual instance of <tt class="docutils literal"><span class="pre">transmission-daemon</span></tt> and then execute this test by calling <tt class="docutils literal"><span class="pre">python</span> <span class="pre">testTransmissionClient.py</span> <span class="pre">&lt;SOCKETPATH&gt;</span></tt> where <tt class="docutils literal"><span class="pre">SOCKETPATH</span></tt> is the path to the socket used by the daemon. On Linux or *BSD this is typically <tt class="docutils literal"><span class="pre">~/.transmission/daemon/socket</span></tt>, on Mac OSX normally <tt class="docutils literal"><span class="pre">$HOME/Library/Application\</span> <span class="pre">Support/Transmission/daemon/socket</span></tt>, YMMV.</p>
+<p>In order for all tests to pass you need to make sure, that the daemon isn't serving any torrents while running the tests. Also, currently <em>you will have to restart the daemon before each testrun</em> -- it will timeout and fail otherwise on subsequent runs because it thinks the torrent added during the second run is a duplicate, eventhough the test cleans up after itself removes it in the final step. This is a <a class="reference" href="http://transmission.m0k.org/trac/ticket/278">known Transmission bug</a>.</p>
+</blockquote>
+<div class="section">
+<h2><a id="adding-torrents" name="adding-torrents">Adding torrents</a></h2>
+<p>To add a torrent, simply provide a path to its location using <cite>add_torrent()</cite>. The add method returns a numerical id of the newly added torrent, which is used for all further operations on that torrent  -- more on that later.</p>
+<p>Initially, there aren't any torrents active:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; len(daemon.get_status_all())
+0
+</pre>
+</blockquote>
+<p>We add one (since it's the first, its numerical id will be <tt class="docutils literal"><span class="pre">1</span></tt>.)</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.add_torrent(&quot;test/data/test_torrent.torrent&quot;)
+1
+</pre>
+</blockquote>
+<p>Now the number of torrents is 1:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; len(daemon.get_status_all())
+1
+</pre>
+</blockquote>
+<p>Trying to add a non-existing torrent file raises a standard <tt class="docutils literal"><span class="pre">OSError</span></tt>:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.add_torrent(&quot;/foo/bar.torrent&quot;)
+Traceback (most recent call last):
+    ...
+OSError: [Errno 2] No such file or directory: '/foo/bar.torrent'
+</pre>
+</blockquote>
+</div>
+<div class="section">
+<h2><a id="status-information" name="status-information">Status information</a></h2>
+<p>The Transmission API offers <em>status</em> and <em>info</em> data on torrent(s). You can either request it for a particular torrent by providing its numerical id or request a status or info <em>list</em> of all currently known torrents:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; info = daemon.get_info(1)
+&gt;&gt;&gt; status = daemon.get_status(1)
+&gt;&gt;&gt; info_all = daemon.get_info_all()
+&gt;&gt;&gt; status_all = daemon.get_status_all()
+</pre>
+</blockquote>
+<p>The actual info or status information is the same, though in each case:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; self.assertEqual(info, info_all[0])
+&gt;&gt;&gt; self.assertEqual(status, status_all[0])
+</pre>
+</blockquote>
+<p>In each case we receive a dictionary. Here are the keys for <em>status</em>:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; status.keys()
+['peers-downloading', 'peers-uploading', 'scrape-leechers', 'swarm-speed', 'error-message', 'state', 'download-speed', 'upload-speed', 'completed', 'scrape-seeders', 'peers-total', 'upload-total', 'running', 'scrape-completed', 'peers-from', 'eta', 'tracker', 'error', 'download-total', 'id']
+</pre>
+</blockquote>
+<p>And here for <em>info</em>:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; info.keys()
+['comment', 'files', 'hash', 'name', 'creator', 'trackers', 'private', 'date', 'path', 'saved', 'id', 'size']
+</pre>
+</blockquote>
+<p>Detailed explanations of the meaning and format of the values returned for the keys mentioned above can be found in the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt">specification</a> and are not within the scope of this documentation. Just mentally substitute all occurrences of <tt class="docutils literal"><span class="pre">('foo',</span> <span class="pre">'bar')</span></tt> with <tt class="docutils literal"><span class="pre">['foo',</span> <span class="pre">'bar']</span></tt> as it uses (Python) tuples to represent lists.</p>
+<p>Calling <tt class="docutils literal"><span class="pre">get_info</span></tt> and <tt class="docutils literal"><span class="pre">get_status</span></tt> for non-existing ids raises an exception:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; info = daemon.get_info(2)
+Traceback (most recent call last):
+    ...
+NoSuchTorrent: No torrent with id `2`
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; status = daemon.get_status(2)
+Traceback (most recent call last):
+    ...
+NoSuchTorrent: No torrent with id `2`
+</pre>
+</blockquote>
+</div>
+<div class="section">
+<h2><a id="starting-and-stopping" name="starting-and-stopping">Starting and stopping</a></h2>
+<p>Depending on the global setting, the newly added torrent might be running already. Let's make sure and stop it (the method returns <cite>True</cite> upon success, i.e. the torrent exists and is now stopped):</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.stop(1)
+True
+</pre>
+</blockquote>
+<p>Now we can start it again (the method returns <cite>True</cite> upon success, i.e. the torrent exists and is now running):</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.start(1)
+True
+</pre>
+</blockquote>
+<p>Being paranoid, we verify this explicitly:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_status(1)['running']
+1
+</pre>
+</blockquote>
+</div>
+<div class="section">
+<h2><a id="operations-on-all-torrents" name="operations-on-all-torrents">Operations on all torrents</a></h2>
+<p>The <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt">specification</a> allows for operations on an arbitrary number of torrents by supplying a list of ids. For the sake of simplicity the Python wrapper supports only operations on single torrents or on <em>all</em> torrents at once. In order to test for that, let's first turn autostart off and add some more torrents:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.set_autostart(False)
+False
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.add_torrent(&quot;test/data/foo_torrent.txt.torrent&quot;, autostart=False)
+2
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_info(2)['name']
+'foo_torrent.txt'
+</pre>
+</blockquote>
+<p>Lo and behold, the new torrent <em>is</em> running:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_status(2)['running']
+1
+</pre>
+</blockquote>
+<p>This seems to be a bug in the current implementation of the transmission-daemon. In a nutshell, currently all added torrents seem to be autostarted regardless of the global setting or any explicit flags passed to the add method. C'est la vie...</p>
+<p>For the third torrent we override the default autostart behaviour by exlicitely passing <cite>autostart=True</cite></p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.add_torrent(&quot;test/data/bar_torrent.txt.torrent&quot;, autostart=True)
+3
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_info(3)['name']
+'bar_torrent.txt'
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_status(3)['running']
+1
+</pre>
+</blockquote>
+<p>Now we stop all torrents:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.stop_all()
+&gt;&gt;&gt; daemon.get_status(1)['running']
+0
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_status(2)['running']
+0
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_status(3)['running']
+0
+</pre>
+</blockquote>
+<p>And start them again:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.start_all()
+&gt;&gt;&gt; daemon.get_status(1)['running']
+1
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_status(2)['running']
+1
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_status(3)['running']
+1
+</pre>
+</blockquote>
+</div>
+<div class="section">
+<h2><a id="removing-torrents" name="removing-torrents">Removing torrents</a></h2>
+<p>To remove a torrent call <tt class="docutils literal"><span class="pre">remove_torrent</span></tt> with the numerical id of the torrent you want to remove. It will return <tt class="docutils literal"><span class="pre">True</span></tt> if removal succeeded:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.remove_torrent(1)
+True
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; len(daemon.get_status_all())
+2
+</pre>
+</blockquote>
+<p>More specifically, it will report <tt class="docutils literal"><span class="pre">True</span></tt> if the given torrent doesn't exist anymore after calling it, however calling it with the id of a (no longer) existing id raises the aforementioned <cite>NoSuchTorrent</cite> exception:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.remove_torrent(1)
+Traceback (most recent call last):
+    ...
+NoSuchTorrent: No torrent with id `1`
+</pre>
+</blockquote>
+<p>Finally, we remove all torrents again and leave a clean slate:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.remove_all()
+True
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; len(daemon.get_status_all())
+0
+</pre>
+</blockquote>
+<p>Calling <tt class="docutils literal"><span class="pre">remove_all</span></tt> even if no torrents are active doesn't raise an exception but instead returns <tt class="docutils literal"><span class="pre">True</span></tt>:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.remove_all()
+True
+</pre>
+</blockquote>
+</div>
+<div class="section">
+<h2><a id="global-get-and-set-methods" name="global-get-and-set-methods">Global get- and set methods</a></h2>
+<p>Apart from commands dealing with specific torrents, there's a list of basic set- and get methods that all follow the pattern of <tt class="docutils literal"><span class="pre">get_foo()</span></tt> and <tt class="docutils literal"><span class="pre">set_foo(value)</span></tt> and that affect the daemon itself:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">get_port</span></tt> / <tt class="docutils literal"><span class="pre">set_port</span></tt></dt>
+<dd>for the port that the daemon listens on (default <tt class="docutils literal"><span class="pre">9090</span></tt>)</dd>
+<dt><tt class="docutils literal"><span class="pre">get_directory</span></tt> / <tt class="docutils literal"><span class="pre">set_directory</span></tt></dt>
+<dd>the directory where the downloaded torrents are written to</dd>
+<dt><tt class="docutils literal"><span class="pre">get_downlimit</span></tt> / <tt class="docutils literal"><span class="pre">set_downlimit</span></tt></dt>
+<dd>the maximum (total) download rate in kilobyte, <tt class="docutils literal"><span class="pre">-1</span></tt> for unlimited</dd>
+<dt><tt class="docutils literal"><span class="pre">get_uplimit</span></tt> / <tt class="docutils literal"><span class="pre">set_uplimit</span></tt></dt>
+<dd>the maximum (total) upload rate in kilobyte, <tt class="docutils literal"><span class="pre">-1</span></tt> for unlimited</dd>
+<dt><tt class="docutils literal"><span class="pre">get_autostart</span></tt> / <tt class="docutils literal"><span class="pre">set_autostart</span></tt></dt>
+<dd>should newly added torrents be started automatically?</dd>
+<dt><tt class="docutils literal"><span class="pre">get_automap</span></tt> / <tt class="docutils literal"><span class="pre">set_automap</span></tt></dt>
+<dd>enable or disable automatic port mapping on the server.</dd>
+</dl>
+<p>Let's look at <tt class="docutils literal"><span class="pre">get_port</span></tt> for example. Since we're running this test against an actual instance of <cite>transmission-daemon</cite>, we'll save the original port value before changing it:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; initial_value = daemon.get_port()
+</pre>
+</blockquote>
+<p>All of the aforementioned set methods provide the new value upon return, so testing the set method implicitely also tests the getter:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.set_port(9091)
+9091
+</pre>
+</blockquote>
+<p>For completeness sake, an <em>explicit</em> Test of the get method:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_port()
+9091
+</pre>
+</blockquote>
+<p>Finally, we clean up after ourselves and reset (and verify) the original value.</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; self.failUnlessEqual(daemon.set_port(initial_value), initial_value)
+</pre>
+</blockquote>
+<p>The remaining methods are tested in a more compact fashion:</p>
+<blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; init_downlimit = self.daemon.get_downlimit()
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_downlimit(200), 200)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_downlimit(init_downlimit), init_downlimit)
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; init_uplimit = self.daemon.get_uplimit()
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_uplimit(200), 200)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_uplimit(init_uplimit), init_uplimit)
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; init_autostart = self.daemon.get_autostart()
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(True), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(False), False)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(init_autostart), init_autostart)
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; init_automap = self.daemon.get_automap()
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(True), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(False), False)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(init_automap), init_automap)
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; init_directory = self.daemon.get_directory()
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_directory(&quot;/tmp/foo&quot;), &quot;/tmp/foo&quot;)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_directory(init_directory), init_directory)
+</pre>
+</blockquote>
+<p>For a more detailed explanation refer to the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt">specification</a>.</p>
+</div>
+</div>
+<div class="section">
+<h1><a id="dependencies" name="dependencies">Dependencies</a></h1>
+<p>This packages uses the <tt class="docutils literal"><span class="pre">bencode</span></tt> and <tt class="docutils literal"><span class="pre">bdecode</span></tt> implementation of the official BitTorrent client which have been singled out as a <a class="reference" href="http://cheeseshop.python.org/pypi/BitTorrent-bencode/">standalone package</a>. If you're using an egg-based distribution of this package you won't need to concern yourself with this dependency, though, as it's handled automatically for you.</p>
+</div>
+<div class="section">
+<h1><a id="credit" name="credit">Credit</a></h1>
+<p>The Python Transmission Client package was written by Tom Lazar &lt;<a class="reference" href="mailto:tom&#64;tomster.org">tom&#64;tomster.org</a>&gt;, <a class="reference" href="http://tomster.org">http://tomster.org</a> and is licensed under the MIT licence (the same licence as Transmission).</p>
+</div>
+</div>
+</body>
+</html>
