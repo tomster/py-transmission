@@ -11,17 +11,17 @@ The 'official' BitTorrent software is in fact already implemented in Python: the
 Performance
 -----------
 
-`Transmission <http://transmission.m0k.org/index.php>`_ is written in C and several orders of magnitude more efficient than the official client. Running several large torrents with a total throughput of perhaps 1Mb/s can seriously tax even a modern machine and sends your CPU-usage easily up into the 20 - 40% region and will noticably affect the performance of other processes on that machine. With transmission the difference becomes hardly even measurable ;-)
+`Transmission <http://transmission.m0k.org/index.php>`_ is written in C and *much* more efficient than the official Python client. Running several large torrents with a total throughput of perhaps 1Mb/s can seriously tax even a modern machine and sends your CPU-usage easily up into the 20 - 40% region and will noticably affect the performance of other processes on that machine. With transmission the difference to normal operation becomes hardly even measurable ;-)
 
 Simplicity
 ----------
 
-Transmission has recently introduced a RPC architecture in which it launches an independant daemon which listens on a local socket for commands and exposes a rich API for monitoring and controlling transmission. This makes it much easier and 'cleaner' to implement clients in other languages, as one doesn't have to deal with issues such as threading or memory management (possibly cross-platform, too!) but rather just needs to implement a simple RPC API. Which is exactly, what this package aims to do.
+Transmission has recently introduced a RPC architecture in which it launches an independant daemon which listens on a local socket for commands and exposes a rich API for monitoring and controlling transmission. This makes it much easier and 'cleaner' to implement clients in other languages, as one doesn't have to deal with issues such as threading or memory management (possibly cross-platform, too!) but rather just needs to implement a simple RPC API. Which is exactly what this package aims to do.
 
 How does it work?
 *****************
 
-It does so by providing a wrapper class ``TransmissionClient``, an instance of which represents a locally running ``transmission-daemon`` and provides wrapper methods to (most of) the RPC methods listed in the specification_.
+It does this by providing a wrapper class ``TransmissionClient``, an instance of which represents a locally running ``transmission-daemon`` and provides wrapper methods to (most of) the RPC methods listed in the specification_.
 
 Usage
 *****
