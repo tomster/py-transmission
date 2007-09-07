@@ -40,7 +40,7 @@ class TransmissionClient(object):
     #
     # internal helper methods:
 
-    def _connect(self):
+    def _connect(self, ping=True):
         """ opens a connection to the daemon"""
 
         if not os.path.exists(self.socketpath):
@@ -63,7 +63,8 @@ Make sure your daemon is up and running!""" % self.socketpath
         self._send_command_v1({'version' : {'min': 1, 'max': 2}})
         # 3. sending a 'ping' seems to ensure that all following messages receive status messages
         # back from the server:
-        # self._send_command_v2('noop')
+        if ping:
+            self._send_command_v2('noop')
         # now the connection has been established and we can start sending commands
 
     def _close(self):
@@ -75,18 +76,23 @@ Make sure your daemon is up and running!""" % self.socketpath
     def _listen(self):
         """Waits for a transmission from the other side and returns it."""
         # First retrieve the eight byte ascii-hex payload length
-        payloadlen = self.socket.recv(8)
+        try:
+            payloadlen = self.socket.recv(8)
+        except IOError, (errno, ermess):
+            if errno in [32, 57]:
+                self._connect()
+                payloadlen = self.socket.recv(8)
         try:
             payloadlen = int(payloadlen, 16)
         except ValueError:
             return None
         return bdecode(self.socket.recv(payloadlen))
 
-    def _send_command_v1(self, dict):
+    def _send_command_v1(self, dictionary):
         """sends a command for protocol version 1. Input is a dictionary with one (or more)
            commands.
         """
-        payload = bencode(dict)
+        payload = bencode(dictionary)
         hexlength = hex(len(payload))[2:].zfill(8)
         return self.socket.send(hexlength + payload)
 
@@ -94,36 +100,52 @@ Make sure your daemon is up and running!""" % self.socketpath
         """sends a command for protocol version 2. Input is the command name as string
            followed by an arbitrary amount of parameters.
         """
+
         # we need to add an empty parameter if none is supplied to satisfy the protocol:
         if not parameters:
             parameters = (0,)
 
         commandlist = [command]
         commandlist.extend(parameters)
-        commandlist.append(self.TAGNUMBER)
         self.TAGNUMBER += 1
+        commandlist.append(self.TAGNUMBER)
         payload = bencode(commandlist)
         hexlength = hex(len(payload))[2:].zfill(8)
-        return self.socket.send(hexlength + payload)
+        encoded = "%s%s" % (hexlength, payload)
+        try:
+            self.socket.send(encoded)
+            return self.TAGNUMBER
+        except Exception, info:
+            try:
+                errno, ermess = info
+                if errno in [32, 57]:
+                    self._connect(ping=False)
+                    self.socket.send(encoded)
+                    return self.TAGNUMBER
+                elif errno == 61:
+                    raise TransmissionClientFailure, """No socket at %s.
+Make sure your daemon is up and running!""" % self.socketpath
+            except ValueError:
+                raise TransmissionClientFailure, "No connection."
         
     def send_receive(self, command, *parameters):
         """expects a command with optional, additional parameters, bencodes it, 
            sends it and returns the answer."""
-        self._connect()
-        self._send_command_v2(command, *parameters)
+        if self.socket is None:
+            self._connect()
+        tag = self._send_command_v2(command, *parameters)
         answer = self._listen()
-        self._close()
+        while answer[-1] != self.TAGNUMBER:
+            answer = self._listen()
         if answer is None:
             raise TransmissionClientNoResponseFailure, "No response from Server. We sent `%s` command with %s as parameters but got nothing back." % (command, repr(parameters))
         else:
             return answer
+    
+    def send_receive_success(self, command, *parameters):
+        """a convenience wrapper to `send_receive` that returns a boolean for the status"""
+        return self.send_receive(command, *parameters)[0] == 'succeeded'
 
-    def send(self, command, *parameters):
-        """expects a command with optional, additional parameters, bencodes it and
-           sends it without waiting for an answer."""
-        self._connect()
-        self._send_command_v2(command, *parameters)
-        self._close()
 
     def get_listresponse(self, command, key, *parameters):
         """convenience method for certain get commands that expect the name of the command (with
@@ -138,9 +160,13 @@ Make sure your daemon is up and running!""" % self.socketpath
         if response[0] == key:
             return response[1]
         else:
-            raise TransmissionClientFailure, \
-                "invalid response from server: '%s'" % repr(response)
-    #
+            if response[0] in ['failure', 'failed']:
+                raise TransmissionClientFailure, \
+                    "command `%s` failed." % command
+            else:
+                raise TransmissionClientFailure, \
+                    "invalid response from server: '%s'" % repr(response)
+
     # public methods from http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt
 
     def get_downlimit(self):
@@ -148,34 +174,25 @@ Make sure your daemon is up and running!""" % self.socketpath
         return self.get_listresponse('get-downlimit', 'downlimit')
 
     def set_downlimit(self, limit):
-        """docstring for get_downlimit"""
-        self.send('downlimit', limit)
-        return self.get_downlimit()
+        return self.send_receive_success('downlimit', limit)
 
     def get_uplimit(self):
         """docstring for get_uplimit"""
         return self.get_listresponse('get-uplimit', 'uplimit')
 
     def set_uplimit(self, limit):
-        """docstring for get_uplimit"""
-        self.send('uplimit', limit)
-        return self.get_uplimit()
+        return self.send_receive_success('uplimit', limit)
 
     def get_port(self):
-        """docstring for get_port"""
         return self.get_listresponse('get-port', 'port')
 
     def set_port(self, port):
-        """docstring for get_downlimit"""
-        self.send('port', port)
-        return self.get_port()
+        return self.send_receive_success('port', port)
 
     def get_status_all(self):
-        """docstring for get_status_all"""
         return self.get_listresponse('get-status-all', 'status', STATUS_TYPES)
 
     def get_info_all(self):
-        """docstring for get_status_all"""
         return self.get_listresponse('get-info-all', 'info', INFO_TYPES)
 
     def get_status(self, id):
@@ -195,23 +212,19 @@ Make sure your daemon is up and running!""" % self.socketpath
 
     def stop_all(self):
         """docstring for stop_all"""
-        return self.send("stop-all")
+        return self.send_receive_success("stop-all")
 
     def start_all(self):
         """docstring for start_all"""
-        return self.send("start-all")
+        return self.send_receive_success("start-all")
 
     def start(self, id):
         """starts one specific torrent, returns True upon success, False, otherwise"""
-        self.send("start", [id,])
-        success = bool(self.get_status(id)['running'])
-        return success
+        return self.send_receive_success("start", [id,])
 
     def stop(self, id):
         """stops one specific torrent"""
-        self.send("stop", [id,])
-        success = not(self.get_status(id)['running'])
-        return success
+        return self.send_receive_success("stop", [id,])
 
     def get_directory(self):
         """returns the path to the directory where the torrents are downloaded to."""
@@ -219,8 +232,7 @@ Make sure your daemon is up and running!""" % self.socketpath
 
     def set_directory(self, directory):
         """"""
-        self.send('directory', directory)
-        return self.get_directory()
+        return self.send_receive_success('directory', directory)
 
     def get_autostart(self):
         """returns whether added torrents are started automatically"""
@@ -228,8 +240,7 @@ Make sure your daemon is up and running!""" % self.socketpath
 
     def set_autostart(self, autostart):
         """"""
-        self.send('autostart', autostart)
-        return self.get_autostart()
+        return self.send_receive_success('autostart', autostart)
 
     def get_automap(self):
         """returns whether added torrents are mapped automatically"""
@@ -237,8 +248,7 @@ Make sure your daemon is up and running!""" % self.socketpath
 
     def set_automap(self, automap):
         """"""
-        self.send('automap', automap)
-        return self.get_automap()
+        return self.send_receive_success('automap', automap)
 
     def add_torrent(self, file=None, directory=None, autostart=None):
         """ Add the given torrent file. Returns the id of the torrent upon success, None
@@ -246,15 +256,15 @@ Make sure your daemon is up and running!""" % self.socketpath
         file = os.path.abspath(file)
         # `getsize` will raise an exception, if the file doesn't exist:
         os.path.getsize(file)
-        dict = {
+        dictionary = {
             'file': file,
         }
         if directory is not None:
-            dict['directory'] = directory
+            dictionary['directory'] = directory
         if autostart is not None:
-            dict['autostart'] = autostart,
+            dictionary['autostart'] = autostart,
         try:
-            success = self.get_listresponse("addfile-detailed", "info", dict)
+            success = self.get_listresponse("addfile-detailed", "info", dictionary)
             return success[0].get('id', None)
         except TransmissionClientNoResponseFailure:
             return None
@@ -263,17 +273,14 @@ Make sure your daemon is up and running!""" % self.socketpath
         """Remove the torrent with the given id. Returns `True` upon success, `False` otherwise."""
         # first we check, if that torrent exists. if not, `get_info` will raise an exception
         self.get_info(id)
-        self.send("remove", [id,])
-        try:
-            self.get_info(id)
-            return False
-        except NoSuchTorrent:
-            return True
+        return self.send_receive_success("remove", [id,])
 
     def remove_all(self):
         """Removes ''all'' torrents. Returns `True` upon success."""
-        self.send("remove-all")
-        return len(self.get_info_all()) == 0
+        return self.send_receive_success("remove-all")
+
+    def ping(self):
+        return self.send_receive_success("noop")
         
 def usage():
     print """usage:

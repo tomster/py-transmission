@@ -28,6 +28,7 @@ Usage
 
 Simply import the `TransmissionClient` class from the `TransmissionClient` module:
 
+    >>> from TransmissionClient import NoSuchTorrent
     >>> from TransmissionClient import TransmissionClient
 
 To create an instance you must supply the constructor with the path to the socket of a locally running transmission-daemon.
@@ -45,15 +46,17 @@ Adding torrents
 
 To add a torrent, simply provide a path to its location using `add_torrent()`. The add method returns a numerical id of the newly added torrent, which is used for all further operations on that torrent  -- more on that later.
 
-Initially, there aren't any torrents active:
+Initially, we make sure there aren't any torrents active:
+
+    >>> daemon.remove_all()
+    True
 
     >>> len(daemon.get_status_all())
     0
 
-We add one (since it's the first, its numerical id will be ``1``.)
+We add one
 
-    >>> daemon.add_torrent("test/data/test_torrent.torrent")
-    1
+    >>> tid = daemon.add_torrent("test/data/test_torrent.torrent")
 
 Now the number of torrents is 1:
 
@@ -73,8 +76,8 @@ Status information
 
 The Transmission API offers *status* and *info* data on torrent(s). You can either request it for a particular torrent by providing its numerical id or request a status or info *list* of all currently known torrents:
 
-    >>> info = daemon.get_info(1)
-    >>> status = daemon.get_status(1)
+    >>> info = daemon.get_info(tid)
+    >>> status = daemon.get_status(tid)
     >>> info_all = daemon.get_info_all()
     >>> status_all = daemon.get_status_all()
 
@@ -97,32 +100,34 @@ Detailed explanations of the meaning and format of the values returned for the k
 
 Calling ``get_info`` and ``get_status`` for non-existing ids raises an exception:
 
-    >>> info = daemon.get_info(2)
-    Traceback (most recent call last):
-        ...
-    NoSuchTorrent: No torrent with id `2`
+    >>> try:
+    ...     info = daemon.get_info(tid+1)
+    ...     self.fail()
+    ... except NoSuchTorrent, e:
+    ...     pass
 
-    >>> status = daemon.get_status(2)
-    Traceback (most recent call last):
-        ...
-    NoSuchTorrent: No torrent with id `2`
+    >>> try:
+    ...     info = daemon.get_status(tid+1)
+    ...     self.fail()
+    ... except NoSuchTorrent, e:
+    ...     pass
 
 Starting and stopping
 ---------------------
 
 Depending on the global setting, the newly added torrent might be running already. Let's make sure and stop it (the method returns `True` upon success, i.e. the torrent exists and is now stopped):
 
-    >>> daemon.stop(1)
+    >>> daemon.stop(tid)
     True
 
 Now we can start it again (the method returns `True` upon success, i.e. the torrent exists and is now running):
 
-    >>> daemon.start(1)
+    >>> daemon.start(tid)
     True
 
 Being paranoid, we verify this explicitly:
 
-    >>> daemon.get_status(1)['running']
+    >>> daemon.get_status(tid)['running']
     1
 
 Operations on all torrents
@@ -131,54 +136,56 @@ Operations on all torrents
 The specification_ allows for operations on an arbitrary number of torrents by supplying a list of ids. For the sake of simplicity the Python wrapper supports only operations on single torrents or on *all* torrents at once. In order to test for that, let's first turn autostart off and add some more torrents:
 
     >>> daemon.set_autostart(False)
-    False
+    True
     
-    >>> daemon.add_torrent("test/data/foo_torrent.txt.torrent", autostart=False)
-    2
+    >>> tid2 = daemon.add_torrent("test/data/foo_torrent.txt.torrent", autostart=False)
 
-    >>> daemon.get_info(2)['name']
+    >>> daemon.get_info(tid2)['name']
     'foo_torrent.txt'
 
-Lo and behold, the new torrent *is* running:
+Lo and behold, the new torrent *is not* running:
 
-    >>> daemon.get_status(2)['running']
-    1
-
-This seems to be a bug in the current implementation of the transmission-daemon. In a nutshell, currently all added torrents seem to be autostarted regardless of the global setting or any explicit flags passed to the add method. C'est la vie...
+    >>> daemon.get_status(tid2)['running']
+    0
 
 For the third torrent we override the default autostart behaviour by exlicitely passing `autostart=True`
 
-    >>> daemon.add_torrent("test/data/bar_torrent.txt.torrent", autostart=True)
-    3
+    >>> tid3 = daemon.add_torrent("test/data/bar_torrent.txt.torrent", autostart=True)
 
-    >>> daemon.get_info(3)['name']
+    >>> daemon.get_info(tid3)['name']
     'bar_torrent.txt'
 
-    >>> daemon.get_status(3)['running']
-    1
+However, this doesn't have the expected effect, as the torrent is, in fact, *not* running
+
+    >>> daemon.get_status(tid3)['running']
+    0
 
 Now we stop all torrents:
 
     >>> daemon.stop_all()
-    >>> daemon.get_status(1)['running']
+    True
+    
+    >>> daemon.get_status(tid)['running']
     0
 
-    >>> daemon.get_status(2)['running']
+    >>> daemon.get_status(tid2)['running']
     0
 
-    >>> daemon.get_status(3)['running']
+    >>> daemon.get_status(tid3)['running']
     0
 
 And start them again:
 
     >>> daemon.start_all()
-    >>> daemon.get_status(1)['running']
+    True
+    
+    >>> daemon.get_status(tid)['running']
     1
 
-    >>> daemon.get_status(2)['running']
+    >>> daemon.get_status(tid2)['running']
     1
 
-    >>> daemon.get_status(3)['running']
+    >>> daemon.get_status(tid3)['running']
     1
 
 Removing torrents
@@ -186,7 +193,7 @@ Removing torrents
 
 To remove a torrent call ``remove_torrent`` with the numerical id of the torrent you want to remove. It will return ``True`` if removal succeeded:
 
-    >>> daemon.remove_torrent(1)
+    >>> daemon.remove_torrent(tid)
     True
 
     >>> len(daemon.get_status_all())
@@ -194,10 +201,11 @@ To remove a torrent call ``remove_torrent`` with the numerical id of the torrent
 
 More specifically, it will report ``True`` if the given torrent doesn't exist anymore after calling it, however calling it with the id of a (no longer) existing id raises the aforementioned `NoSuchTorrent` exception:
 
-    >>> daemon.remove_torrent(1)
-    Traceback (most recent call last):
-        ...
-    NoSuchTorrent: No torrent with id `1`
+    >>> try:
+    ...     daemon.remove_torrent(tid)
+    ...     self.fail()
+    ... except NoSuchTorrent, e:
+    ...     pass
 
 Finally, we remove all torrents again and leave a clean slate:
 
@@ -242,7 +250,7 @@ Let's look at ``get_port`` for example. Since we're running this test against an
 All of the aforementioned set methods provide the new value upon return, so testing the set method implicitely also tests the getter:
 
     >>> daemon.set_port(9091)
-    9091
+    True
 
 For completeness sake, an *explicit* Test of the get method:
 
@@ -251,31 +259,33 @@ For completeness sake, an *explicit* Test of the get method:
 
 Finally, we clean up after ourselves and reset (and verify) the original value.
 
-    >>> self.failUnlessEqual(daemon.set_port(initial_value), initial_value)
+    >>> self.failUnlessEqual(daemon.set_port(initial_value), True)
+    >>> daemon.get_port() == 9091
+    True
 
 The remaining methods are tested in a more compact fashion:
 
     >>> init_downlimit = self.daemon.get_downlimit()
-    >>> self.failUnlessEqual(self.daemon.set_downlimit(200), 200)
-    >>> self.failUnlessEqual(self.daemon.set_downlimit(init_downlimit), init_downlimit)
+    >>> self.failUnlessEqual(self.daemon.set_downlimit(200), True)
+    >>> self.failUnlessEqual(self.daemon.set_downlimit(init_downlimit), True)
 
     >>> init_uplimit = self.daemon.get_uplimit()
-    >>> self.failUnlessEqual(self.daemon.set_uplimit(200), 200)
-    >>> self.failUnlessEqual(self.daemon.set_uplimit(init_uplimit), init_uplimit)
+    >>> self.failUnlessEqual(self.daemon.set_uplimit(200), True)
+    >>> self.failUnlessEqual(self.daemon.set_uplimit(init_uplimit), True)
 
     >>> init_autostart = self.daemon.get_autostart()
     >>> self.failUnlessEqual(self.daemon.set_autostart(True), True)
-    >>> self.failUnlessEqual(self.daemon.set_autostart(False), False)
-    >>> self.failUnlessEqual(self.daemon.set_autostart(init_autostart), init_autostart)
+    >>> self.failUnlessEqual(self.daemon.set_autostart(False), True)
+    >>> self.failUnlessEqual(self.daemon.set_autostart(init_autostart), True)
 
     >>> init_automap = self.daemon.get_automap()
     >>> self.failUnlessEqual(self.daemon.set_automap(True), True)
-    >>> self.failUnlessEqual(self.daemon.set_automap(False), False)
-    >>> self.failUnlessEqual(self.daemon.set_automap(init_automap), init_automap)
+    >>> self.failUnlessEqual(self.daemon.set_automap(False), True)
+    >>> self.failUnlessEqual(self.daemon.set_automap(init_automap), True)
 
     >>> init_directory = self.daemon.get_directory()
-    >>> self.failUnlessEqual(self.daemon.set_directory("/tmp/foo"), "/tmp/foo")
-    >>> self.failUnlessEqual(self.daemon.set_directory(init_directory), init_directory)
+    >>> self.failUnlessEqual(self.daemon.set_directory("/tmp/foo"), True)
+    >>> self.failUnlessEqual(self.daemon.set_directory(init_directory), True)
 
 For a more detailed explanation refer to the specification_.
 
@@ -290,4 +300,5 @@ Credit
 The Python Transmission Client package was written by Tom Lazar <tom@tomster.org>, http://tomster.org and is licensed under the MIT licence (the same licence as Transmission).
 
 .. _specification: http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt
+
 
