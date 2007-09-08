@@ -247,12 +247,12 @@ Let's look at ``get_port`` for example. Since we're running this test against an
 
     >>> initial_value = daemon.get_port()
 
-All of the aforementioned set methods provide the new value upon return, so testing the set method implicitely also tests the getter:
+All of the aforementioned set methods provide `True` upon return for success.
 
     >>> daemon.set_port(9091)
     True
 
-For completeness sake, an *explicit* Test of the get method:
+An explicit test confirms this:
 
     >>> daemon.get_port()
     9091
@@ -260,31 +260,38 @@ For completeness sake, an *explicit* Test of the get method:
 Finally, we clean up after ourselves and reset (and verify) the original value.
 
     >>> self.failUnlessEqual(daemon.set_port(initial_value), True)
-    >>> daemon.get_port() == 9091
+    >>> daemon.get_port() == initial_value
     True
 
 The remaining methods are tested in a more compact fashion:
 
     >>> init_downlimit = self.daemon.get_downlimit()
     >>> self.failUnlessEqual(self.daemon.set_downlimit(200), True)
+    >>> self.failUnlessEqual(self.daemon.get_downlimit(), 200)
     >>> self.failUnlessEqual(self.daemon.set_downlimit(init_downlimit), True)
 
     >>> init_uplimit = self.daemon.get_uplimit()
     >>> self.failUnlessEqual(self.daemon.set_uplimit(200), True)
+    >>> self.failUnlessEqual(self.daemon.get_uplimit(), 200)
     >>> self.failUnlessEqual(self.daemon.set_uplimit(init_uplimit), True)
 
     >>> init_autostart = self.daemon.get_autostart()
     >>> self.failUnlessEqual(self.daemon.set_autostart(True), True)
+    >>> self.failUnlessEqual(self.daemon.get_autostart(), True)
     >>> self.failUnlessEqual(self.daemon.set_autostart(False), True)
+    >>> self.failUnlessEqual(self.daemon.get_autostart(), False)
     >>> self.failUnlessEqual(self.daemon.set_autostart(init_autostart), True)
 
     >>> init_automap = self.daemon.get_automap()
     >>> self.failUnlessEqual(self.daemon.set_automap(True), True)
+    >>> self.failUnlessEqual(self.daemon.get_automap(), True)
     >>> self.failUnlessEqual(self.daemon.set_automap(False), True)
+    >>> self.failUnlessEqual(self.daemon.get_automap(), False)
     >>> self.failUnlessEqual(self.daemon.set_automap(init_automap), True)
 
     >>> init_directory = self.daemon.get_directory()
     >>> self.failUnlessEqual(self.daemon.set_directory("/tmp/foo"), True)
+    >>> self.failUnlessEqual(self.daemon.get_directory(), "/tmp/foo")
     >>> self.failUnlessEqual(self.daemon.set_directory(init_directory), True)
 
 For a more detailed explanation refer to the specification_.
@@ -299,6 +306,6 @@ Credit
 
 The Python Transmission Client package was written by Tom Lazar <tom@tomster.org>, http://tomster.org and is licensed under the MIT licence (the same licence as Transmission).
 
-.. _specification: http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt
+.. _specification: http://transmission.m0k.org/trac/browser/trunk/doc/ipcproto.txt
 
 
