@@ -314,6 +314,7 @@ ul.auto-toc {
 <p>Simply import the <cite>TransmissionClient</cite> class from the <cite>TransmissionClient</cite> module:</p>
 <blockquote>
 <pre class="doctest-block">
+&gt;&gt;&gt; from TransmissionClient import NoSuchTorrent
 &gt;&gt;&gt; from TransmissionClient import TransmissionClient
 </pre>
 </blockquote>
@@ -331,18 +332,21 @@ ul.auto-toc {
 <div class="section">
 <h2><a id="adding-torrents" name="adding-torrents">Adding torrents</a></h2>
 <p>To add a torrent, simply provide a path to its location using <cite>add_torrent()</cite>. The add method returns a numerical id of the newly added torrent, which is used for all further operations on that torrent  -- more on that later.</p>
-<p>Initially, there aren't any torrents active:</p>
+<p>Initially, we make sure there aren't any torrents active:</p>
 <blockquote>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.remove_all()
+True
+</pre>
 <pre class="doctest-block">
 &gt;&gt;&gt; len(daemon.get_status_all())
 0
 </pre>
 </blockquote>
-<p>We add one (since it's the first, its numerical id will be <tt class="docutils literal"><span class="pre">1</span></tt>.)</p>
+<p>We add one</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.add_torrent(&quot;test/data/test_torrent.torrent&quot;)
-1
+&gt;&gt;&gt; tid = daemon.add_torrent(&quot;test/data/test_torrent.torrent&quot;)
 </pre>
 </blockquote>
 <p>Now the number of torrents is 1:</p>
@@ -367,8 +371,8 @@ OSError: [Errno 2] No such file or directory: '/foo/bar.torrent'
 <p>The Transmission API offers <em>status</em> and <em>info</em> data on torrent(s). You can either request it for a particular torrent by providing its numerical id or request a status or info <em>list</em> of all currently known torrents:</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; info = daemon.get_info(1)
-&gt;&gt;&gt; status = daemon.get_status(1)
+&gt;&gt;&gt; info = daemon.get_info(tid)
+&gt;&gt;&gt; status = daemon.get_status(tid)
 &gt;&gt;&gt; info_all = daemon.get_info_all()
 &gt;&gt;&gt; status_all = daemon.get_status_all()
 </pre>
@@ -398,16 +402,18 @@ OSError: [Errno 2] No such file or directory: '/foo/bar.torrent'
 <p>Calling <tt class="docutils literal"><span class="pre">get_info</span></tt> and <tt class="docutils literal"><span class="pre">get_status</span></tt> for non-existing ids raises an exception:</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; info = daemon.get_info(2)
-Traceback (most recent call last):
-    ...
-NoSuchTorrent: No torrent with id `2`
+&gt;&gt;&gt; try:
+...     info = daemon.get_info(tid+1)
+...     self.fail()
+... except NoSuchTorrent, e:
+...     pass
 </pre>
 <pre class="doctest-block">
-&gt;&gt;&gt; status = daemon.get_status(2)
-Traceback (most recent call last):
-    ...
-NoSuchTorrent: No torrent with id `2`
+&gt;&gt;&gt; try:
+...     info = daemon.get_status(tid+1)
+...     self.fail()
+... except NoSuchTorrent, e:
+...     pass
 </pre>
 </blockquote>
 </div>
@@ -416,21 +422,21 @@ NoSuchTorrent: No torrent with id `2`
 <p>Depending on the global setting, the newly added torrent might be running already. Let's make sure and stop it (the method returns <cite>True</cite> upon success, i.e. the torrent exists and is now stopped):</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.stop(1)
+&gt;&gt;&gt; daemon.stop(tid)
 True
 </pre>
 </blockquote>
 <p>Now we can start it again (the method returns <cite>True</cite> upon success, i.e. the torrent exists and is now running):</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.start(1)
+&gt;&gt;&gt; daemon.start(tid)
 True
 </pre>
 </blockquote>
 <p>Being paranoid, we verify this explicitly:</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.get_status(1)['running']
+&gt;&gt;&gt; daemon.get_status(tid)['running']
 1
 </pre>
 </blockquote>
@@ -441,53 +447,56 @@ True
 <blockquote>
 <pre class="doctest-block">
 &gt;&gt;&gt; daemon.set_autostart(False)
-False
+True
 </pre>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.add_torrent(&quot;test/data/foo_torrent.txt.torrent&quot;, autostart=False)
-2
+&gt;&gt;&gt; tid2 = daemon.add_torrent(&quot;test/data/foo_torrent.txt.torrent&quot;, autostart=False)
 </pre>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.get_info(2)['name']
+&gt;&gt;&gt; daemon.get_info(tid2)['name']
 'foo_torrent.txt'
 </pre>
 </blockquote>
-<p>Lo and behold, the new torrent <em>is</em> running:</p>
+<p>Lo and behold, the new torrent <em>is not</em> running:</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.get_status(2)['running']
-1
+&gt;&gt;&gt; daemon.get_status(tid2)['running']
+0
 </pre>
 </blockquote>
-<p>This seems to be a bug in the current implementation of the transmission-daemon. In a nutshell, currently all added torrents seem to be autostarted regardless of the global setting or any explicit flags passed to the add method. C'est la vie...</p>
 <p>For the third torrent we override the default autostart behaviour by exlicitely passing <cite>autostart=True</cite></p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.add_torrent(&quot;test/data/bar_torrent.txt.torrent&quot;, autostart=True)
-3
+&gt;&gt;&gt; tid3 = daemon.add_torrent(&quot;test/data/bar_torrent.txt.torrent&quot;, autostart=True)
 </pre>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.get_info(3)['name']
+&gt;&gt;&gt; daemon.get_info(tid3)['name']
 'bar_torrent.txt'
 </pre>
+</blockquote>
+<p>However, this doesn't have the expected effect, as the torrent is, in fact, <em>not</em> running</p>
+<blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.get_status(3)['running']
-1
+&gt;&gt;&gt; daemon.get_status(tid3)['running']
+0
 </pre>
 </blockquote>
 <p>Now we stop all torrents:</p>
 <blockquote>
 <pre class="doctest-block">
 &gt;&gt;&gt; daemon.stop_all()
-&gt;&gt;&gt; daemon.get_status(1)['running']
+True
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_status(tid)['running']
 0
 </pre>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.get_status(2)['running']
+&gt;&gt;&gt; daemon.get_status(tid2)['running']
 0
 </pre>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.get_status(3)['running']
+&gt;&gt;&gt; daemon.get_status(tid3)['running']
 0
 </pre>
 </blockquote>
@@ -495,15 +504,18 @@ False
 <blockquote>
 <pre class="doctest-block">
 &gt;&gt;&gt; daemon.start_all()
-&gt;&gt;&gt; daemon.get_status(1)['running']
+True
+</pre>
+<pre class="doctest-block">
+&gt;&gt;&gt; daemon.get_status(tid)['running']
 1
 </pre>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.get_status(2)['running']
+&gt;&gt;&gt; daemon.get_status(tid2)['running']
 1
 </pre>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.get_status(3)['running']
+&gt;&gt;&gt; daemon.get_status(tid3)['running']
 1
 </pre>
 </blockquote>
@@ -513,7 +525,7 @@ False
 <p>To remove a torrent call <tt class="docutils literal"><span class="pre">remove_torrent</span></tt> with the numerical id of the torrent you want to remove. It will return <tt class="docutils literal"><span class="pre">True</span></tt> if removal succeeded:</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.remove_torrent(1)
+&gt;&gt;&gt; daemon.remove_torrent(tid)
 True
 </pre>
 <pre class="doctest-block">
@@ -524,10 +536,11 @@ True
 <p>More specifically, it will report <tt class="docutils literal"><span class="pre">True</span></tt> if the given torrent doesn't exist anymore after calling it, however calling it with the id of a (no longer) existing id raises the aforementioned <cite>NoSuchTorrent</cite> exception:</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; daemon.remove_torrent(1)
-Traceback (most recent call last):
-    ...
-NoSuchTorrent: No torrent with id `1`
+&gt;&gt;&gt; try:
+...     daemon.remove_torrent(tid)
+...     self.fail()
+... except NoSuchTorrent, e:
+...     pass
 </pre>
 </blockquote>
 <p>Finally, we remove all torrents again and leave a clean slate:</p>
@@ -576,7 +589,7 @@ True
 <blockquote>
 <pre class="doctest-block">
 &gt;&gt;&gt; daemon.set_port(9091)
-9091
+True
 </pre>
 </blockquote>
 <p>For completeness sake, an <em>explicit</em> Test of the get method:</p>
@@ -589,37 +602,39 @@ True
 <p>Finally, we clean up after ourselves and reset (and verify) the original value.</p>
 <blockquote>
 <pre class="doctest-block">
-&gt;&gt;&gt; self.failUnlessEqual(daemon.set_port(initial_value), initial_value)
+&gt;&gt;&gt; self.failUnlessEqual(daemon.set_port(initial_value), True)
+&gt;&gt;&gt; daemon.get_port() == 9091
+True
 </pre>
 </blockquote>
 <p>The remaining methods are tested in a more compact fashion:</p>
 <blockquote>
 <pre class="doctest-block">
 &gt;&gt;&gt; init_downlimit = self.daemon.get_downlimit()
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_downlimit(200), 200)
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_downlimit(init_downlimit), init_downlimit)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_downlimit(200), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_downlimit(init_downlimit), True)
 </pre>
 <pre class="doctest-block">
 &gt;&gt;&gt; init_uplimit = self.daemon.get_uplimit()
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_uplimit(200), 200)
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_uplimit(init_uplimit), init_uplimit)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_uplimit(200), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_uplimit(init_uplimit), True)
 </pre>
 <pre class="doctest-block">
 &gt;&gt;&gt; init_autostart = self.daemon.get_autostart()
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(True), True)
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(False), False)
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(init_autostart), init_autostart)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(False), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(init_autostart), True)
 </pre>
 <pre class="doctest-block">
 &gt;&gt;&gt; init_automap = self.daemon.get_automap()
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(True), True)
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(False), False)
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(init_automap), init_automap)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(False), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(init_automap), True)
 </pre>
 <pre class="doctest-block">
 &gt;&gt;&gt; init_directory = self.daemon.get_directory()
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_directory(&quot;/tmp/foo&quot;), &quot;/tmp/foo&quot;)
-&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_directory(init_directory), init_directory)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_directory(&quot;/tmp/foo&quot;), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_directory(init_directory), True)
 </pre>
 </blockquote>
 <p>For a more detailed explanation refer to the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt">specification</a>.</p>
