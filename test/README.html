@@ -307,7 +307,7 @@ ul.auto-toc {
 </div>
 <div class="section">
 <h1><a id="how-does-it-work" name="how-does-it-work">How does it work?</a></h1>
-<p>It does this by providing a wrapper class <tt class="docutils literal"><span class="pre">TransmissionClient</span></tt>, an instance of which represents a locally running <tt class="docutils literal"><span class="pre">transmission-daemon</span></tt> and provides wrapper methods to (most of) the RPC methods listed in the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt">specification</a>.</p>
+<p>It does this by providing a wrapper class <tt class="docutils literal"><span class="pre">TransmissionClient</span></tt>, an instance of which represents a locally running <tt class="docutils literal"><span class="pre">transmission-daemon</span></tt> and provides wrapper methods to (most of) the RPC methods listed in the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/doc/ipcproto.txt">specification</a>.</p>
 </div>
 <div class="section">
 <h1><a id="usage" name="usage">Usage</a></h1>
@@ -398,7 +398,7 @@ OSError: [Errno 2] No such file or directory: '/foo/bar.torrent'
 ['comment', 'files', 'hash', 'name', 'creator', 'trackers', 'private', 'date', 'path', 'saved', 'id', 'size']
 </pre>
 </blockquote>
-<p>Detailed explanations of the meaning and format of the values returned for the keys mentioned above can be found in the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt">specification</a> and are not within the scope of this documentation. Just mentally substitute all occurrences of <tt class="docutils literal"><span class="pre">('foo',</span> <span class="pre">'bar')</span></tt> with <tt class="docutils literal"><span class="pre">['foo',</span> <span class="pre">'bar']</span></tt> as it uses (Python) tuples to represent lists.</p>
+<p>Detailed explanations of the meaning and format of the values returned for the keys mentioned above can be found in the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/doc/ipcproto.txt">specification</a> and are not within the scope of this documentation. Just mentally substitute all occurrences of <tt class="docutils literal"><span class="pre">('foo',</span> <span class="pre">'bar')</span></tt> with <tt class="docutils literal"><span class="pre">['foo',</span> <span class="pre">'bar']</span></tt> as it uses (Python) tuples to represent lists.</p>
 <p>Calling <tt class="docutils literal"><span class="pre">get_info</span></tt> and <tt class="docutils literal"><span class="pre">get_status</span></tt> for non-existing ids raises an exception:</p>
 <blockquote>
 <pre class="doctest-block">
@@ -443,7 +443,7 @@ True
 </div>
 <div class="section">
 <h2><a id="operations-on-all-torrents" name="operations-on-all-torrents">Operations on all torrents</a></h2>
-<p>The <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt">specification</a> allows for operations on an arbitrary number of torrents by supplying a list of ids. For the sake of simplicity the Python wrapper supports only operations on single torrents or on <em>all</em> torrents at once. In order to test for that, let's first turn autostart off and add some more torrents:</p>
+<p>The <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/doc/ipcproto.txt">specification</a> allows for operations on an arbitrary number of torrents by supplying a list of ids. For the sake of simplicity the Python wrapper supports only operations on single torrents or on <em>all</em> torrents at once. In order to test for that, let's first turn autostart off and add some more torrents:</p>
 <blockquote>
 <pre class="doctest-block">
 &gt;&gt;&gt; daemon.set_autostart(False)
@@ -585,14 +585,14 @@ True
 &gt;&gt;&gt; initial_value = daemon.get_port()
 </pre>
 </blockquote>
-<p>All of the aforementioned set methods provide the new value upon return, so testing the set method implicitely also tests the getter:</p>
+<p>All of the aforementioned set methods provide <cite>True</cite> upon return for success.</p>
 <blockquote>
 <pre class="doctest-block">
 &gt;&gt;&gt; daemon.set_port(9091)
 True
 </pre>
 </blockquote>
-<p>For completeness sake, an <em>explicit</em> Test of the get method:</p>
+<p>An explicit test confirms this:</p>
 <blockquote>
 <pre class="doctest-block">
 &gt;&gt;&gt; daemon.get_port()
@@ -603,7 +603,7 @@ True
 <blockquote>
 <pre class="doctest-block">
 &gt;&gt;&gt; self.failUnlessEqual(daemon.set_port(initial_value), True)
-&gt;&gt;&gt; daemon.get_port() == 9091
+&gt;&gt;&gt; daemon.get_port() == initial_value
 True
 </pre>
 </blockquote>
@@ -612,32 +612,39 @@ True
 <pre class="doctest-block">
 &gt;&gt;&gt; init_downlimit = self.daemon.get_downlimit()
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_downlimit(200), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.get_downlimit(), 200)
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_downlimit(init_downlimit), True)
 </pre>
 <pre class="doctest-block">
 &gt;&gt;&gt; init_uplimit = self.daemon.get_uplimit()
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_uplimit(200), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.get_uplimit(), 200)
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_uplimit(init_uplimit), True)
 </pre>
 <pre class="doctest-block">
 &gt;&gt;&gt; init_autostart = self.daemon.get_autostart()
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(True), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.get_autostart(), True)
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(False), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.get_autostart(), False)
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_autostart(init_autostart), True)
 </pre>
 <pre class="doctest-block">
 &gt;&gt;&gt; init_automap = self.daemon.get_automap()
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(True), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.get_automap(), True)
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(False), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.get_automap(), False)
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_automap(init_automap), True)
 </pre>
 <pre class="doctest-block">
 &gt;&gt;&gt; init_directory = self.daemon.get_directory()
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_directory(&quot;/tmp/foo&quot;), True)
+&gt;&gt;&gt; self.failUnlessEqual(self.daemon.get_directory(), &quot;/tmp/foo&quot;)
 &gt;&gt;&gt; self.failUnlessEqual(self.daemon.set_directory(init_directory), True)
 </pre>
 </blockquote>
-<p>For a more detailed explanation refer to the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/misc/ipcproto.txt">specification</a>.</p>
+<p>For a more detailed explanation refer to the <a class="reference" href="http://transmission.m0k.org/trac/browser/trunk/doc/ipcproto.txt">specification</a>.</p>
 </div>
 </div>
 <div class="section">
