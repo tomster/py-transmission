@@ -3,6 +3,8 @@ The Python Transmission Client
 
 The Python Transmission Client module is a **Python API** for the `Transmission Bit TorrentClient <http://transmission.m0k.org/index.php>`_. 
 
+**NOTE** This package is considered deprecated, as it only works with Transmission version 1.2.x, which still used sockets to communicate with the transmission daemon. If you're looking for python bindings that work with current versions of Transmission, look at `transmissionrpc <http://pypi.python.org/pypi/transmissionrpc/>`_.
+
 Why Python bindings for Transmission?
 *************************************
 
